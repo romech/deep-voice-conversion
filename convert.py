@@ -19,6 +19,7 @@ from tensorpack.tfutils.sessinit import SaverRestore
 from tensorpack.tfutils.sessinit import ChainInit
 from tensorpack.callbacks.base import Callback
 import pickle
+import scipy
 
 # class ConvertCallback(Callback):
 #     def __init__(self, logdir, test_per_epoch=1):
@@ -42,30 +43,31 @@ import pickle
 
 
 def convert(predictor, df):
-    pred_spec, y_spec, ppgs = predictor(next(df().get_data()))
+    # pred_spec, y_spec, ppgs = predictor(next(df().get_data()))
+    pred_spec, y_spec, ppgs = predictor(df)
 
     # Denormalizatoin
     pred_spec = denormalize_db(pred_spec, hp.default.max_db, hp.default.min_db)
-    y_spec = denormalize_db(y_spec, hp.default.max_db, hp.default.min_db)
+    # y_spec = denormalize_db(y_spec, hp.default.max_db, hp.default.min_db)
 
     # Db to amp
     pred_spec = db2amp(pred_spec)
-    y_spec = db2amp(y_spec)
+    # y_spec = db2amp(y_spec)
 
     # Emphasize the magnitude
     pred_spec = np.power(pred_spec, hp.convert.emphasis_magnitude)
-    y_spec = np.power(y_spec, hp.convert.emphasis_magnitude)
+    # y_spec = np.power(y_spec, hp.convert.emphasis_magnitude)
 
     # Spectrogram to waveform
     audio = np.array(map(lambda spec: spec2wav(spec.T, hp.default.n_fft, hp.default.win_length, hp.default.hop_length,
                                                hp.default.n_iter), pred_spec))
-    y_audio = np.array(map(lambda spec: spec2wav(spec.T, hp.default.n_fft, hp.default.win_length, hp.default.hop_length,
-                                                 hp.default.n_iter), y_spec))
+    # y_audio = np.array(map(lambda spec: spec2wav(spec.T, hp.default.n_fft, hp.default.win_length, hp.default.hop_length,
+    #                                              hp.default.n_iter), y_spec))
 
     # Apply inverse pre-emphasis
     audio = inv_preemphasis(audio, coeff=hp.default.preemphasis)
-    y_audio = inv_preemphasis(y_audio, coeff=hp.default.preemphasis)
-    pickle.dump( y_audio, open( "y-audio.p", "wb" ) )
+    # y_audio = inv_preemphasis(y_audio, coeff=hp.default.preemphasis)
+    # pickle.dump( y_audio, open( "y-audio.p", "wb" ) )
     pickle.dump( audio, open( "o-audio.p", "wb" ) )
 
     # if hp.convert.one_full_wav:
@@ -73,7 +75,8 @@ def convert(predictor, df):
     #     y_audio = np.reshape(y_audio, (1, y_audio.size), order='C')
     #     audio = np.reshape(audio, (1, audio.size), order='C')
 
-    return audio, y_audio, ppgs
+    # return audio, y_audio, ppgs
+    return audio, ppgs
 
 
 def get_eval_input_names():
@@ -88,7 +91,7 @@ def do_convert(args, logdir1, logdir2):
     # Load graph
     model = Net2()
 
-    df = Net2DataFlow(hp.convert.data_path, hp.convert.batch_size)
+    df = Net2DataFlow(hp.convert.data_base_dir_original + hp.convert.data_path, hp.convert.batch_size)
 
     ckpt1 = tf.train.latest_checkpoint(logdir1)
     ckpt2 = '{}/{}'.format(logdir2, args.ckpt) if args.ckpt else tf.train.latest_checkpoint(logdir2)
@@ -104,21 +107,28 @@ def do_convert(args, logdir1, logdir2):
         session_init=ChainInit(session_inits))
     predictor = OfflinePredictor(pred_conf)
 
-    audio, y_audio, ppgs = convert(predictor, df)
+    # loop over all the audio files
+    for wav_file in df.wav_files:
+        audio, ppgs = convert(predictor, df.get_data_for_one_file(wav_file))
+        # write audio
+        out_path = wav_file.replace(hp.convert.data_base_dir_original, hp.convert.data_base_dir_convert)
+        # change file extension from wv1/wv2 to wav
+        out_path = out_path[:-2] + 'av'
+        scipy.io.wavfile.write(out_path, hp.default.sr, audio[0]*hp.convert.amplitude_multiplier)
 
     # Write the result
-    tf.summary.audio('A', y_audio, hp.default.sr, max_outputs=hp.convert.batch_size)
-    tf.summary.audio('B', audio, hp.default.sr, max_outputs=hp.convert.batch_size)
+    # tf.summary.audio('A', y_audio, hp.default.sr, max_outputs=hp.convert.batch_size)
+    # tf.summary.audio('B', audio, hp.default.sr, max_outputs=hp.convert.batch_size)
 
     # Visualize PPGs
-    heatmap = np.expand_dims(ppgs, 3)  # channel=1
-    tf.summary.image('PPG', heatmap, max_outputs=ppgs.shape[0])
+    # heatmap = np.expand_dims(ppgs, 3)  # channel=1
+    # tf.summary.image('PPG', heatmap, max_outputs=ppgs.shape[0])
 
-    writer = tf.summary.FileWriter(logdir2)
-    with tf.Session() as sess:
-        summ = sess.run(tf.summary.merge_all())
-    writer.add_summary(summ)
-    writer.close()
+    # writer = tf.summary.FileWriter(logdir2)
+    # with tf.Session() as sess:
+    #     summ = sess.run(tf.summary.merge_all())
+    # writer.add_summary(summ)
+    # writer.close()
 
     # session_conf = tf.ConfigProto(
     #     allow_soft_placement=True,

@@ -89,9 +89,13 @@ test2:
 ---
 convert:
     # path
-    data_path: '/mount/arbeitsdaten/asr-2/mishradv/deep-voice-conversion/datasets/arctic/bdl/*.wav'
+    # data_path: '/mount/arbeitsdaten/asr-2/mishradv/deep-voice-conversion/datasets/arctic/bdl/*.wav'
+    data_base_dir_original: '/projekte/slu/Data/'
+    data_base_dir_convert: '/mount/arbeitsdaten/asr-2/mishradv/wsj/'
+    data_path: 'WSJ*/*/*/*/*/*.wv*'
 
     # convert
     one_full_wav: True
     batch_size: 1
     emphasis_magnitude: 1.2
+    amplitude_multiplier: 100

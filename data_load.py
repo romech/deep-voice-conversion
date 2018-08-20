@@ -41,6 +41,9 @@ class Net2DataFlow(DataFlow):
         while True:
             wav_file = random.choice(self.wav_files)
             yield get_mfccs_and_spectrogram(wav_file)
+    
+    def get_data_for_one_file(self, wav_file):
+        return get_mfccs_and_spectrogram(wav_file)
 
 
 def load_data(mode):
