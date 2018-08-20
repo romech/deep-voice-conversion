@@ -42,8 +42,8 @@ import scipy
 #             # tf.summary.audio('B', audio, hp.default.sr, max_outputs=hp.convert.batch_size)
 
 
-def convert(predictor, df):
-    tensor = next(df().get_data())
+def convert(predictor, tensor):
+    # tensor = next(df().get_data())
     print(tensor.shape)
     pred_spec, y_spec, ppgs = predictor(tensor)
     # pred_spec, y_spec, ppgs = predictor(tf.expand_dims(df, 0))
@@ -70,7 +70,7 @@ def convert(predictor, df):
     audio = inv_preemphasis(audio, coeff=hp.default.preemphasis)
     # y_audio = inv_preemphasis(y_audio, coeff=hp.default.preemphasis)
     # pickle.dump( y_audio, open( "y-audio.p", "wb" ) )
-    pickle.dump( audio, open( "o-audio.p", "wb" ) )
+    # pickle.dump( audio, open( "o-audio.p", "wb" ) )
 
     # if hp.convert.one_full_wav:
     #     # Concatenate to a wav
@@ -110,16 +110,16 @@ def do_convert(args, logdir1, logdir2):
     predictor = OfflinePredictor(pred_conf)
 
     # loop over all the audio files
-    # for wav_file in df.wav_files:
-    #     audio, ppgs = convert(predictor, df.get_data_for_one_file(wav_file))
-    #     # write audio
-    #     out_path = wav_file.replace(hp.convert.data_base_dir_original, hp.convert.data_base_dir_convert)
-    #     # change file extension from wv1/wv2 to wav
-    #     out_path = out_path[:-2] + 'av'
-    #     scipy.io.wavfile.write(out_path, hp.default.sr, audio[0]*hp.convert.amplitude_multiplier)
+    for iterr in df.get_all_data():
+        audio, ppgs = convert(predictor, iterr[1])
+        # write audio
+        out_path = iterr[0].replace(hp.convert.data_base_dir_original, hp.convert.data_base_dir_convert)
+        # change file extension from wv1/wv2 to wav
+        out_path = out_path[:-2] + 'av'
+        scipy.io.wavfile.write(out_path, hp.default.sr, audio[0]*hp.convert.amplitude_multiplier)
 
-    audio, ppgs = convert(predictor, df)
-    print(audio)
+    # audio, ppgs = convert(predictor, df)
+    # print(audio)
 
     # Write the result
     # tf.summary.audio('A', y_audio, hp.default.sr, max_outputs=hp.convert.batch_size)
