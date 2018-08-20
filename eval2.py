@@ -15,7 +15,7 @@ from data_load import Net2DataFlow
 
 
 def get_eval_input_names():
-    return ['x_mfccs', 'y_spec']
+    return ['x_mfccs', 'y_spec', 'y_mel']
 
 
 def get_eval_output_names():
@@ -43,8 +43,8 @@ def eval(logdir1, logdir2):
         session_init=ChainInit(session_inits))
     predictor = OfflinePredictor(pred_conf)
 
-    x_mfccs, y_spec, _ = next(df().get_data())
-    summ_loss, = predictor(x_mfccs, y_spec)
+    # x_mfccs, y_spec, _ = next(df().get_data())
+    summ_loss, = predictor(next(df().get_data()))
 
     writer = tf.summary.FileWriter(logdir2)
     writer.add_summary(summ_loss)

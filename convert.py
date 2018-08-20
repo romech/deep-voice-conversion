@@ -18,7 +18,7 @@ from tensorpack.predict.config import PredictConfig
 from tensorpack.tfutils.sessinit import SaverRestore
 from tensorpack.tfutils.sessinit import ChainInit
 from tensorpack.callbacks.base import Callback
-
+import pickle
 
 # class ConvertCallback(Callback):
 #     def __init__(self, logdir, test_per_epoch=1):
@@ -65,6 +65,8 @@ def convert(predictor, df):
     # Apply inverse pre-emphasis
     audio = inv_preemphasis(audio, coeff=hp.default.preemphasis)
     y_audio = inv_preemphasis(y_audio, coeff=hp.default.preemphasis)
+    pickle.dump( y_audio, open( "y-audio.p", "wb" ) )
+    pickle.dump( audio, open( "o-audio.p", "wb" ) )
 
     # if hp.convert.one_full_wav:
     #     # Concatenate to a wav
