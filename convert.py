@@ -43,8 +43,10 @@ import scipy
 
 
 def convert(predictor, df):
-    # pred_spec, y_spec, ppgs = predictor(next(df().get_data()))
-    pred_spec, y_spec, ppgs = predictor(tf.expand_dims(df, 0))
+    tensor = next(df().get_data())
+    print(tensor.shape)
+    pred_spec, y_spec, ppgs = predictor(tensor)
+    # pred_spec, y_spec, ppgs = predictor(tf.expand_dims(df, 0))
 
     # Denormalizatoin
     pred_spec = denormalize_db(pred_spec, hp.default.max_db, hp.default.min_db)
@@ -108,13 +110,16 @@ def do_convert(args, logdir1, logdir2):
     predictor = OfflinePredictor(pred_conf)
 
     # loop over all the audio files
-    for wav_file in df.wav_files:
-        audio, ppgs = convert(predictor, df.get_data_for_one_file(wav_file))
-        # write audio
-        out_path = wav_file.replace(hp.convert.data_base_dir_original, hp.convert.data_base_dir_convert)
-        # change file extension from wv1/wv2 to wav
-        out_path = out_path[:-2] + 'av'
-        scipy.io.wavfile.write(out_path, hp.default.sr, audio[0]*hp.convert.amplitude_multiplier)
+    # for wav_file in df.wav_files:
+    #     audio, ppgs = convert(predictor, df.get_data_for_one_file(wav_file))
+    #     # write audio
+    #     out_path = wav_file.replace(hp.convert.data_base_dir_original, hp.convert.data_base_dir_convert)
+    #     # change file extension from wv1/wv2 to wav
+    #     out_path = out_path[:-2] + 'av'
+    #     scipy.io.wavfile.write(out_path, hp.default.sr, audio[0]*hp.convert.amplitude_multiplier)
+
+    audio, ppgs = convert(predictor, df)
+    print(audio)
 
     # Write the result
     # tf.summary.audio('A', y_audio, hp.default.sr, max_outputs=hp.convert.batch_size)
