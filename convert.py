@@ -44,7 +44,7 @@ import scipy
 
 def convert(predictor, tensor):
     # tensor = next(df().get_data())
-    print(tensor.shape)
+    # print(tensor.shape)
     pred_spec, y_spec, ppgs = predictor(tensor)
     # pred_spec, y_spec, ppgs = predictor(tf.expand_dims(df, 0))
 
