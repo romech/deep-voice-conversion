@@ -44,7 +44,7 @@ import scipy
 
 def convert(predictor, df):
     # pred_spec, y_spec, ppgs = predictor(next(df().get_data()))
-    pred_spec, y_spec, ppgs = predictor(df)
+    pred_spec, y_spec, ppgs = predictor(tf.expand_dims(df, 0))
 
     # Denormalizatoin
     pred_spec = denormalize_db(pred_spec, hp.default.max_db, hp.default.min_db)
