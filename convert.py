@@ -117,6 +117,7 @@ def do_convert(args, logdir1, logdir2, input_dir):
         out_path = out_path[:-2] + 'av'
         if os.path.isfile(out_path):
             # file is already present, move on to the next one.
+            print("skipping " + iterr[0])
             continue
 
         print("converting " + iterr[0])
