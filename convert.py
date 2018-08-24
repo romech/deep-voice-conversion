@@ -18,7 +18,7 @@ from tensorpack.predict.config import PredictConfig
 from tensorpack.tfutils.sessinit import SaverRestore
 from tensorpack.tfutils.sessinit import ChainInit
 from tensorpack.callbacks.base import Callback
-import pickle
+import os
 import scipy
 
 # class ConvertCallback(Callback):
@@ -89,11 +89,11 @@ def get_eval_output_names():
     return ['pred_spec', 'y_spec', 'ppgs']
 
 
-def do_convert(args, logdir1, logdir2):
+def do_convert(args, logdir1, logdir2, input_dir):
     # Load graph
     model = Net2()
-
-    df = Net2DataFlow(hp.convert.data_base_dir_original + hp.convert.data_path, hp.convert.batch_size)
+    # input_dir = hp.convert.data_base_dir_original + hp.convert.data_path
+    df = Net2DataFlow(input_dir, hp.convert.batch_size)
 
     ckpt1 = tf.train.latest_checkpoint(logdir1)
     ckpt2 = '{}/{}'.format(logdir2, args.ckpt) if args.ckpt else tf.train.latest_checkpoint(logdir2)
@@ -111,11 +111,17 @@ def do_convert(args, logdir1, logdir2):
 
     # loop over all the audio files
     for iterr in df.get_all_data():
-        audio, ppgs = convert(predictor, iterr[1])
-        # write audio
+        # check if file is present audio
         out_path = iterr[0].replace(hp.convert.data_base_dir_original, hp.convert.data_base_dir_convert)
         # change file extension from wv1/wv2 to wav
         out_path = out_path[:-2] + 'av'
+        if os.path.isfile(out_path):
+            # file is already present, move on to the next one.
+            continue
+
+        print("converting " + iterr[0])
+        # convert audio
+        audio, ppgs = convert(predictor, iterr[1])
         scipy.io.wavfile.write(out_path, hp.default.sr, audio[0]*hp.convert.amplitude_multiplier)
 
     # audio, ppgs = convert(predictor, df)
@@ -149,6 +155,7 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('case1', type=str, help='experiment case name of train1')
     parser.add_argument('case2', type=str, help='experiment case name of train2')
+    parser.add_argument('input_dir', type=str, help='input dir to convert')
     parser.add_argument('-ckpt', help='checkpoint to load model.')
     arguments = parser.parse_args()
     return arguments
@@ -161,10 +168,11 @@ if __name__ == '__main__':
     logdir_train2 = '{}/{}/train2'.format(hp.logdir_path, args.case2)
 
     print('case1: {}, case2: {}, logdir1: {}, logdir2: {}'.format(args.case1, args.case2, logdir_train1, logdir_train2))
+    print("input dir " + args.input_dir)
 
     s = datetime.datetime.now()
 
-    do_convert(args, logdir1=logdir_train1, logdir2=logdir_train2)
+    do_convert(args, logdir1=logdir_train1, logdir2=logdir_train2, input_dir = args.input_dir)
 
     e = datetime.datetime.now()
     diff = e - s
