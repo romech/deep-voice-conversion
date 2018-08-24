@@ -121,7 +121,8 @@ def do_convert(args, logdir1, logdir2, input_dir):
 
         print("converting " + iterr[0])
         # convert audio
-        audio, ppgs = convert(predictor, iterr[1])
+        input_arr = ([iterr[1][0]], [iterr[1][1]], [iterr[1][2]])
+        audio, ppgs = convert(predictor, input_arr)
         scipy.io.wavfile.write(out_path, hp.default.sr, audio[0]*hp.convert.amplitude_multiplier)
 
     # audio, ppgs = convert(predictor, df)
