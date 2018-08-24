@@ -110,19 +110,20 @@ def do_convert(args, logdir1, logdir2, input_dir):
     predictor = OfflinePredictor(pred_conf)
 
     # loop over all the audio files
-    for iterr in df.get_all_data():
+    for wav_file in df.wav_files:
         # check if file is present audio
-        out_path = iterr[0].replace(hp.convert.data_base_dir_original, hp.convert.data_base_dir_convert)
+        out_path = wav_file.replace(hp.convert.data_base_dir_original, hp.convert.data_base_dir_convert)
         # change file extension from wv1/wv2 to wav
         out_path = out_path[:-2] + 'av'
         if os.path.isfile(out_path):
             # file is already present, move on to the next one.
-            print("skipping " + iterr[0])
+            print("skipping " + wav_file)
             continue
 
-        print("converting " + iterr[0])
+        print("converting " + wav_file)
         # convert audio
-        input_arr = ([iterr[1][0]], [iterr[1][1]], [iterr[1][2]])
+        feats = df.get_features(wav_file)
+        input_arr = ([feats[0]], [feats[1]], [feats[2]])
         audio, ppgs = convert(predictor, input_arr)
         scipy.io.wavfile.write(out_path, hp.default.sr, audio[0]*hp.convert.amplitude_multiplier)
 
