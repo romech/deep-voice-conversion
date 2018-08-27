@@ -47,7 +47,7 @@ class Net2DataFlow(DataFlow):
             yield wav_file, get_mfccs_and_spectrogram(wav_file)
 
     def get_features(self, wav_file):
-        return get_mfccs_and_spectrogram(wav_file)
+        return get_mfccs_and_spectrogram(wav_file, False, False, False)
 
 
 def load_data(mode):
@@ -119,7 +119,7 @@ def get_mfccs_and_phones(wav_file, trim=False, random_crop=True):
     return mfccs, phns
 
 
-def get_mfccs_and_spectrogram(wav_file, trim=True, random_crop=False):
+def get_mfccs_and_spectrogram(wav_file, trim=True, random_crop=False, padding=True):
     '''This is applied in `train2`, `test2` or `convert` phase.
     '''
 
@@ -135,8 +135,9 @@ def get_mfccs_and_spectrogram(wav_file, trim=True, random_crop=False):
         wav = wav_random_crop(wav, hp.default.sr, hp.default.duration)
 
     # Padding or crop
-    length = hp.default.sr * hp.default.duration
-    wav = librosa.util.fix_length(wav, length)
+    if padding:
+        length = hp.default.sr * hp.default.duration
+        wav = librosa.util.fix_length(wav, length)
 
     return _get_mfcc_and_spec(wav, hp.default.preemphasis, hp.default.n_fft, hp.default.win_length, hp.default.hop_length)
 
