@@ -123,13 +123,13 @@ def do_convert(args, logdir1, logdir2, input_dir):
 
         print("converting " + wav_file)
         # convert audio
-        feats = df.get_features(wav_file)
+        audio_len, feats = df.get_features(wav_file)
         audio_full = []
         for feat in feats:
             input_arr = ([feat[0]], [feat[1]], [feat[2]])
             audio, ppgs = convert(predictor, input_arr)
             audio_full.append((audio[0]*hp.convert.amplitude_multiplier).astype(np.int16))
-        scipy.io.wavfile.write(out_path, hp.default.sr, np.concatenate(audio_full))
+        scipy.io.wavfile.write(out_path, hp.default.sr, np.concatenate(audio_full)[:audio_len])
 
     # audio, ppgs = convert(predictor, df)
     # print(audio)
