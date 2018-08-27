@@ -98,4 +98,4 @@ convert:
     one_full_wav: True
     batch_size: 1
     emphasis_magnitude: 1.2
-    amplitude_multiplier: 100
+    amplitude_multiplier: 25600

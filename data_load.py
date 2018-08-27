@@ -47,7 +47,7 @@ class Net2DataFlow(DataFlow):
             yield wav_file, get_mfccs_and_spectrogram(wav_file)
 
     def get_features(self, wav_file):
-        return get_mfccs_and_spectrogram(wav_file, False, False, False)
+        return get_mfccs_and_spectrogram_full(wav_file)
 
 
 def load_data(mode):
@@ -118,8 +118,29 @@ def get_mfccs_and_phones(wav_file, trim=False, random_crop=True):
 
     return mfccs, phns
 
+def chunks(l, n):
+    n = max(1, n)
+    return (l[i:i+n] for i in xrange(0, len(l), n))
 
-def get_mfccs_and_spectrogram(wav_file, trim=True, random_crop=False, padding=True):
+
+def get_mfccs_and_spectrogram_full(wav_file):
+    """This is only applied to convert phase to convert the full input file"""
+    wav, _ = librosa.load(wav_file, sr=hp.default.sr)
+    length = hp.default.sr * hp.default.duration
+
+    wav_chunks = chunks(wav, length)
+    mfcc_and_spec_arr = []
+    for chunk in wav_chunks:
+        if len(chunk) < length:
+            wav = librosa.util.fix_length(wav, length)
+        mfcc_and_spec_res = _get_mfcc_and_spec(wav, hp.default.preemphasis, hp.default.n_fft, hp.default.win_length, hp.default.hop_length)
+
+    mfcc_and_spec_arr.append(mfcc_and_spec_res)
+
+    return mfcc_and_spec_arr
+
+
+def get_mfccs_and_spectrogram(wav_file, trim=True, random_crop=False):
     '''This is applied in `train2`, `test2` or `convert` phase.
     '''
 
@@ -135,9 +156,8 @@ def get_mfccs_and_spectrogram(wav_file, trim=True, random_crop=False, padding=Tr
         wav = wav_random_crop(wav, hp.default.sr, hp.default.duration)
 
     # Padding or crop
-    if padding:
-        length = hp.default.sr * hp.default.duration
-        wav = librosa.util.fix_length(wav, length)
+    length = hp.default.sr * hp.default.duration
+    wav = librosa.util.fix_length(wav, length)
 
     return _get_mfcc_and_spec(wav, hp.default.preemphasis, hp.default.n_fft, hp.default.win_length, hp.default.hop_length)
 

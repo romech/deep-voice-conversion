@@ -20,6 +20,7 @@ from tensorpack.tfutils.sessinit import ChainInit
 from tensorpack.callbacks.base import Callback
 import os
 import scipy
+import numpy as np
 
 # class ConvertCallback(Callback):
 #     def __init__(self, logdir, test_per_epoch=1):
@@ -123,9 +124,12 @@ def do_convert(args, logdir1, logdir2, input_dir):
         print("converting " + wav_file)
         # convert audio
         feats = df.get_features(wav_file)
-        input_arr = ([feats[0]], [feats[1]], [feats[2]])
-        audio, ppgs = convert(predictor, input_arr)
-        scipy.io.wavfile.write(out_path, hp.default.sr, audio[0]*hp.convert.amplitude_multiplier)
+        audio_full = []
+        for feat in feats:
+            input_arr = ([feat[0]], [feat[1]], [feat[2]])
+            audio, ppgs = convert(predictor, input_arr)
+            audio_full.append((audio[0]*hp.convert.amplitude_multiplier).astype(np.int16))
+        scipy.io.wavfile.write(out_path, hp.default.sr, np.concatenate(audio_full))
 
     # audio, ppgs = convert(predictor, df)
     # print(audio)
