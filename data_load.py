@@ -134,8 +134,7 @@ def get_mfccs_and_spectrogram_full(wav_file):
         if len(chunk) < length:
             chunk = librosa.util.fix_length(chunk, length)
         mfcc_and_spec_res = _get_mfcc_and_spec(chunk, hp.default.preemphasis, hp.default.n_fft, hp.default.win_length, hp.default.hop_length)
-
-    mfcc_and_spec_arr.append(mfcc_and_spec_res)
+        mfcc_and_spec_arr.append(mfcc_and_spec_res)
 
     return mfcc_and_spec_arr
 
